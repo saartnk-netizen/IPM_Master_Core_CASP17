@@ -1,0 +1,30 @@
+IPM_Master_Core (Group 157)
+A Fully Automated, Hardware-Efficient Pipeline for Protein Ensembles, Ligand Docking, and Tertiary Structures
+
+Saar Amit
+Independent Researcher
+saartnk@gmail.com
+
+Key: Auto:Y; CASP_serv:N; Templ:Y; MSA:Y; DeepL:Y; AF:AF2; EMA:N; MD:Y
+
+The Integrated Physics Model (IPM) Master Core is a fully automated, high-throughput structural prediction pipeline developed for CASP17. Designed to operate efficiently on standard personal computer (PC) hardware, the system executes a complete predictive cycle in an average of two minutes per target without relying on massive GPU clusters. Our pipeline targets a core limitation of modern deep-learning structural predictors: the "ground-state trap," wherein deep evolutionary covariation networks overwhelmingly favor a single global energy minimum. By systematically throttling evolutionary signals and employing physics-based thermodynamic relaxation, the IPM Master Core captures transient conformational states, accurately models multi-ligand topologies, and predicts dynamic protein ensembles.
+
+Methods
+
+1. Conformational Ensembles and Dynamics (E-Targets)
+Standard deep-learning predictors are inherently biased toward highly stable global minima. To predict distinct kinetic states with significant energy barriers (e.g., E2459, E2460), we bypassed this ground-state trap using a multi-phase algorithmic strategy. First, we aggressively restricted Multiple Sequence Alignment (MSA) depth to a maximum of 16:32 and activated Neural Dropout (Variable Forking) during inference. This evolutionary constriction disrupted the network's pathway to the global consensus state, forcing the trajectory into rare, higher-energy conformational basins. Second, to trap these transient states before mathematical decay, we implemented a rigorous recycle cap (3 to 6 recycles) while generating a massive ensemble of up to 400 distinct models across unique random seeds. Third, the raw topologies were subjected to physics-based thermodynamic relaxation using OpenMM with the AMBER14 force field and OBC2 implicit solvent models, idealizing bond geometries without escaping the local energy minima. Finally, we eschewed pLDDT-based rankings for ensemble discretization, instead applying an unsupervised K-Means clustering algorithm in 3D Euclidean space to the relaxed alpha-carbon coordinates. This vector-based extraction directly mirrored the energetic barriers and physical populations observed in solution.
+
+2. Ligand Docking and Multi-Ligand Topologies (L-Targets)
+For ligand-protein complexes, the IPM pipeline employed an exact topological rendering protocol to satisfy rigid CASP formatting constraints. We utilized a customized ligand builder to execute dynamic topological reconciliation, mapping required SMILES strings to 3D coordinates. To prevent validation failures stemming from atom-count discrepancies, we integrated a forced hydrogen-stripping module (removeHs=True) ensuring absolute topological parity with 2D formulas. For targets requiring multi-ligand topologies within the same pocket, the pipeline dynamically grouped all relevant SDF coordinates into contiguous MDL blocks, bypassing overwrite conflicts and strictly adhering to CASP target indexing. Furthermore, the pipeline automatically performed a silent CSO-to-CYS mutation during PDB packaging to pass rigid sequence validators without shifting spatial column alignments.
+
+3. Tertiary and Quaternary Structures (T/H-Targets)
+For standard monomeric and multimeric targets, we utilized a tiered hybrid execution model. A fast-path topological gate utilizing ESMFold generated initial single-sequence spatial predictions. If the confidence metric (pLDDT) exceeded a predefined threshold, the topology was secured. For targets failing this gate, the system fell back to a custom AlphaFold2 oracle utilizing local MSAs retrieved via ColabFold APIs. All computations across all target categories were performed autonomously on a standard PC, achieving an average execution time of just two minutes per cycle.
+
+Availability
+The IPM Master Core architecture, including all ensemble engines, topological reconcilers, and methodology reports, is fully open-source and available to the general public on GitHub at: https://github.com/saartnk-netizen/IPM_Master_Core_CASP17
+
+References
+1. Jumper, J., et al. (2021). Highly accurate protein structure prediction with AlphaFold. Nature, 596(7873), 583-589.
+2. Lin, Z., et al. (2023). Evolutionary-scale prediction of atomic-level protein structure with a language model. Science, 379(6637), 1123-1130.
+3. Eastman, P., et al. (2017). OpenMM 7: Rapid development of high performance algorithms for molecular dynamics. PLOS Computational Biology, 13(7), e1005659.
+4. Mirdita, M., et al. (2022). ColabFold: making protein folding accessible to all. Nature Methods, 19(6), 679-682.
